@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.env.local
+.next/
+storage/downloads/*
+storage/converted/*
+!storage/downloads/.gitkeep
+!storage/converted/.gitkeep

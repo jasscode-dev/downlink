@@ -1,0 +1,19 @@
+{
+  "name": "video-converter",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:worker": "npm run dev --workspace=apps/worker",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspaces --if-present",
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
