@@ -23,7 +23,16 @@ export class JobController {
             return res.status(404).json({ error: "Job não encontrado" });
         }
 
-        return res.json({ job });
+        return res.json({
+            job:
+            {
+                ...job,
+                outputFilePath: undefined,
+                downloadUrl: job.status === "completed" ?
+                    `api/jobs/${job.id}/download` : null,
+
+            }
+        });
     }
 
     async download(req: Request, res: Response) {

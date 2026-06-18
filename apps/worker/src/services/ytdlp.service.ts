@@ -1,11 +1,13 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
-import ffmpegStatic from "ffmpeg-static";
+
+
 
 export interface DownloadResult {
   filePath: string;
   title: string;
 }
+
 
 const DOWNLOADS_DIR = path.resolve(process.cwd(), "../../storage/downloads");
 
@@ -21,7 +23,6 @@ export function downloadVideo(
     const ytDlp = spawn("yt-dlp", [
       url,
       "-o", outputTemplate,
-      "--ffmpeg-location", (ffmpegStatic as unknown as string) || "",
       "--print", "after_move:filepath",
       "--newline",
     ]);
@@ -32,13 +33,13 @@ export function downloadVideo(
     ytDlp.stdout.on("data", (chunk: Buffer) => {
       const text = chunk.toString();
 
-      // yt-dlp imprime algo como "[download]  42.0% of 10.00MiB"
+
       const progressMatch = text.match(/(\d+(?:\.\d+)?)%/);
       if (progressMatch) {
         onProgress(parseFloat(progressMatch[1]));
       }
 
-      // Captura o caminho final do arquivo impresso pelo --print
+
       if (text.trim().startsWith("/") || text.trim().match(/^[A-Za-z]:\\/)) {
         finalPath = text.trim();
       }
