@@ -1,5 +1,6 @@
 import { redisConnection } from "../config/redis.js";
-import type { JobRecord, JobStatus } from "@video-converter/shared";
+import type { JobRecord, JobStatus } from "@video-converter/shared/types/job.js";
+
 
 const jobKey = (id: string) => `job:${id}`;
 

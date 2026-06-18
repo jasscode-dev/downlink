@@ -25,6 +25,26 @@ export class JobController {
 
         return res.json({ job });
     }
+
+    async download(req: Request, res: Response) {
+        const { id } = req.params;
+        const job = await jobService.getJob(id);
+
+        if (!job) {
+            return res.status(404).json({ error: "Job não encontrado" });
+        }
+
+        if (job.status !== "completed" || !job.outputFilePath) {
+            return res.status(400).json({ error: "O vídeo ainda não está pronto para download." });
+        }
+
+        const fs = await import("fs");
+        if (!fs.existsSync(job.outputFilePath)) {
+            return res.status(404).json({ error: "Arquivo não encontrado no servidor." });
+        }
+
+        return res.download(job.outputFilePath);
+    }
 }
 
 export const jobController = new JobController();
