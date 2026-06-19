@@ -1,34 +1,21 @@
 import type { Request, Response } from "express";
-import { videoInputSchema } from "@video-converter/shared/schemas/video.schema.js";
+import { videoInputSchema, urlSchema } from "@video-converter/shared/schemas/video.schema.js";
 import { videoService } from "../services/video.service.js";
 import { getVideoInfo } from "@video-converter/worker/src/services/ytdlp.service.js";
 
 export class VideoController {
     async getInfo(req: Request, res: Response) {
-        const url = req.query.url as string;
-    
-        if (!url) {
-          return res.status(400).json({ error: "URL é obrigatória" });
-        }
-    
-        try {
-          const info = await getVideoInfo(url);
-          return res.json({ info });
-        } catch (error: any) {
-          console.error("Erro ao buscar info do vídeo:", error);
-          return res.status(500).json({ error: "Falha ao obter informações do vídeo" });
-        }
+        const url = urlSchema.parse(req.query.url);
+
+        const info = await getVideoInfo(url);
+        return res.json({ error: null, data: { info } });
     }
 
     async create(req: Request, res: Response) {
-        const parsed = videoInputSchema.safeParse(req.body);
+        const data = videoInputSchema.parse(req.body);
 
-        if (!parsed.success) {
-            return res.status(400).json({ error: parsed.error.flatten() });
-        }
-
-        const video = await videoService.processVideo(parsed.data);
-        return res.status(201).json({ video });
+        const video = await videoService.processVideo(data);
+        return res.status(201).json({ error: null, data: { video } });
     }
 
     async getById(req: Request, res: Response) {
@@ -36,16 +23,18 @@ export class VideoController {
         const video = await videoService.getVideo(id);
 
         if (!video) {
-            return res.status(404).json({ error: "Vídeo não encontrado" });
+            return res.status(404).json({ error: "Vídeo não encontrado", data: null });
         }
 
         return res.json({
-            video:
-            {
-                ...video,
-                outputFilePath: undefined,
-                downloadUrl: video.status === "completed" ?
-                    `api/videos/${video.id}/download` : null,
+            error: null,
+            data: {
+                video: {
+                    ...video,
+                    outputFilePath: undefined,
+                    downloadUrl: video.status === "completed" ?
+                        `api/videos/${video.id}/download` : null,
+                }
             }
         });
     }
@@ -55,16 +44,16 @@ export class VideoController {
         const video = await videoService.getVideo(id);
 
         if (!video) {
-            return res.status(404).json({ error: "Vídeo não encontrado" });
+            return res.status(404).json({ error: "Vídeo não encontrado", data: null });
         }
 
         if (video.status !== "completed" || !video.outputFilePath) {
-            return res.status(400).json({ error: "O vídeo ainda não está pronto para download." });
+            return res.status(400).json({ error: "O vídeo ainda não está pronto para download.", data: null });
         }
 
         const fs = await import("fs");
         if (!fs.existsSync(video.outputFilePath)) {
-            return res.status(404).json({ error: "Arquivo não encontrado no servidor." });
+            return res.status(404).json({ error: "Arquivo não encontrado no servidor.", data: null });
         }
 
         return res.download(video.outputFilePath);

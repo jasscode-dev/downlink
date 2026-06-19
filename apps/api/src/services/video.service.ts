@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { redisConnection } from "../config/redis.js";
 import { VideoInput, VideoRecord } from "@video-converter/shared/types/video.js";
 import { videoQueue } from "../queue/video.queue.js";
+import { AppError } from "../errors/appError.js";
 
 const videoKey = (id: string) => `video:${id}`;
 
@@ -27,11 +28,13 @@ export class VideoService {
         return record;
     }
 
-    async getVideo(id: string): Promise<VideoRecord | null> {
+    async getVideo(id: string): Promise<VideoRecord> {
         const raw = await redisConnection.get(videoKey(id));
-        if (!raw) return null;
+        if (!raw) throw new AppError("Video not found!", 404);
         return JSON.parse(raw) as VideoRecord;
     }
+
+
 }
 
 export const videoService = new VideoService();
