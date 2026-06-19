@@ -10,7 +10,6 @@ export const downloadService = {
 
     getVideoInfo: async (url: string) => {
         const response = await api.get(`/api/videos/info?url=${encodeURIComponent(url)}`);
-        console.log(response.data.data)
         return response.data.data;
     },
 

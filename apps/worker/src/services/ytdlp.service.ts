@@ -20,6 +20,7 @@ export function downloadVideo(
 
 
     const ytDlp = spawn("yt-dlp", [
+      "--no-playlist",
       url,
       "-o", outputTemplate,
       "--newline",
@@ -73,7 +74,7 @@ export function downloadVideo(
 
 export async function getVideoInfo(url: string): Promise<VideoInfo> {
   return new Promise((resolve, reject) => {
-    const ytDlp = spawn("yt-dlp", ["--dump-json", url]);
+    const ytDlp = spawn("yt-dlp", ["--no-playlist", "--dump-json", url]);
 
     let output = "";
 

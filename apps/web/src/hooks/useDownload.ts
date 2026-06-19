@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { io, Socket } from 'socket.io-client';
 import { downloadService } from '../services/download.service';
 import type { OutputFormat, VideoInfo } from '../../../../packages/shared/types/video';
 import { urlSchema } from '../../../../packages/shared/schemas/video.schema';
@@ -15,46 +16,53 @@ export function useDownload() {
     const [error, setError] = useState<string | null>(null);
     const [videoId, setVideoId] = useState<string | null>(null);
 
-    const isPolling = useRef(false);
+    const socketRef = useRef<Socket | null>(null);
 
-    const pollVideoStatus = async (id: string) => {
-        if (!isPolling.current) return;
+    const connectSocket = (id: string) => {
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-        try {
-            const { video } = await downloadService.getVideoStatus(id);
 
-            setProgress(video.progress || 0);
-
-            if (video.status === 'completed') {
-                setStatusText('Download concluído!');
-                setIsDownloading(false);
-                setIsDownloaded(true);
-                isPolling.current = false;
-                return;
-            }
-
-            if (video.status === 'failed') {
-                setStatusText('Falha no processamento.');
-                setError(video.errorMessage || 'Erro desconhecido ao processar o vídeo.');
-                setIsDownloading(false);
-                isPolling.current = false;
-                return;
-            }
-
-            if (video.status === 'downloading') setStatusText('Downloading...');
-            else if (video.status === 'converting') setStatusText('Converting...');
-            else if (video.status !== 'queued') setStatusText('Processing...');
-
-            if (isPolling.current) {
-                setTimeout(() => pollVideoStatus(id), 200);
-            }
-        } catch (err) {
-            console.error('Erro ao consultar status:', err);
-
-            if (isPolling.current) {
-                setTimeout(() => pollVideoStatus(id), 2000);
-            }
+        if (socketRef.current) {
+            socketRef.current.disconnect();
         }
+
+        const socket = io(baseUrl);
+        socketRef.current = socket;
+
+        socket.on('connect', () => {
+            console.log('Conectado ao WebSocket:', socket.id);
+            socket.emit('join', id);
+        });
+
+        socket.on('video-progress', (data: { progress: number, status?: string }) => {
+            setProgress(data.progress);
+            console.log(data);
+
+            let statusDisplay = 'Processing';
+            if (data.status === 'downloading') statusDisplay = 'Downloading';
+            if (data.status === 'converting') statusDisplay = 'Converting';
+
+            setStatusText(`${statusDisplay}...`);
+        });
+
+        socket.on('video-completed', () => {
+
+            setProgress(100);
+            setStatusText('Download concluído!');
+            setIsDownloading(false);
+            setIsDownloaded(true);
+            socket.disconnect();
+            socketRef.current = null;
+        });
+
+        socket.on('video-failed', (data: { error?: string }) => {
+
+            setStatusText('Falha no processamento.');
+            setError(data.error || 'Erro desconhecido ao processar o vídeo.');
+            setIsDownloading(false);
+            socket.disconnect();
+            socketRef.current = null;
+        });
     };
 
     const startDownload = async (url: string, format: OutputFormat = 'gif') => {
@@ -63,15 +71,15 @@ export function useDownload() {
         setIsDownloading(true);
         setIsDownloaded(false);
         setProgress(0);
-        setStatusText('Iniciando...');
+        setStatusText('Processing...');
         setError(null);
 
         try {
             const { video } = await downloadService.processVideo({ url, outputFormat: format });
             setVideoId(video.id);
 
-            isPolling.current = true;
-            pollVideoStatus(video.id);
+
+            connectSocket(video.id);
 
         } catch (err: any) {
             console.error('Falha ao enviar link:', err);
@@ -82,7 +90,10 @@ export function useDownload() {
     };
 
     const resetDownload = useCallback(() => {
-        isPolling.current = false;
+        if (socketRef.current) {
+            socketRef.current.disconnect();
+            socketRef.current = null;
+        }
         setIsDownloaded(false);
         setIsDownloading(false);
         setProgress(0);
@@ -129,7 +140,7 @@ export function useDownload() {
     const handleSave = () => {
         if (videoId) {
             const a = document.createElement('a')
-            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+            const baseUrl = import.meta.env.VITE_API_URL
             a.href = `${baseUrl}/api/videos/${videoId}/download`
             a.download = ''
             document.body.appendChild(a)
@@ -146,7 +157,9 @@ export function useDownload() {
 
     useEffect(() => {
         return () => {
-            isPolling.current = false;
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
         };
     }, []);
 
