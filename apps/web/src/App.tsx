@@ -6,13 +6,22 @@ import {
   Loader2,
   CheckCircle2,
   Save,
+  Search,
+  X
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDownload } from './hooks/useDownload'
+import { downloadService } from './services/download.service'
+import type { OutputFormat, VideoInfo } from '@video-converter/shared/types/job.js'
 
 function App() {
   const [url, setUrl] = useState('')
+  const [format, setFormat] = useState<OutputFormat>('mp4')
+  const [previewInfo, setPreviewInfo] = useState<VideoInfo | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
+
   const {
+    jobId,
     isDownloading,
     isDownloaded,
     progress,
@@ -30,14 +39,43 @@ function App() {
     }
   }
 
-  const handleDownload = () => {
+  const handleSearch = async () => {
+    if (!url) return
+    setIsSearching(true)
+    try {
+      const info = await downloadService.getVideoInfo(url)
+      setPreviewInfo(info)
+    } catch (error) {
+      console.error('Erro ao buscar:', error)
+    } finally {
+      setIsSearching(false)
+    }
+  }
 
-    startDownload(url, 'gif')
+  const handleCancelSearch = () => {
+    setPreviewInfo(null)
+    setUrl('')
+  }
+
+  const handleDownload = () => {
+    startDownload(url, format)
   }
 
   const handleSave = () => {
-    resetDownload()
-    setUrl('')
+    if (jobId) {
+      const a = document.createElement('a')
+      a.href = `http://localhost:8080/api/jobs/${jobId}/download`
+      a.download = ''
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    }
+
+    setTimeout(() => {
+      setPreviewInfo(null)
+      resetDownload()
+      setUrl('')
+    }, 100)
   }
 
   const showStatus = isDownloading || isDownloaded
@@ -61,35 +99,77 @@ function App() {
               placeholder="paste your link here"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              disabled={isDownloading || isDownloaded}
+              disabled={isDownloading || isDownloaded || isSearching || !!previewInfo}
             />
 
-            <button
-              onClick={handlePaste}
-              title="Colar da área de transferência"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-text-faded hover:text-primary transition-colors disabled:opacity-50"
-              disabled={isDownloading || isDownloaded}
-            >
-              <Copy className="w-5 h-5" />
-            </button>
+            {!previewInfo && (
+              <button
+                onClick={handlePaste}
+                title="Colar da área de transferência"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-text-faded hover:text-primary transition-colors disabled:opacity-50"
+                disabled={isDownloading || isDownloaded || isSearching}
+              >
+                <Copy className="w-5 h-5" />
+              </button>
+            )}
           </div>
 
-          <Dropdown options={['mp4', 'gif']} />
-
-          <button
-            onClick={handleDownload}
-            disabled={!url || isDownloading || isDownloaded}
-            className="flex items-center justify-center text-gray-200 cursor-pointer bg-primary hover:bg-opacity-90 font-semibold py-3 px-6 rounded-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
-          >
-            {isDownloading ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
-            ) : (
-              <Download className="w-6 h-6" />
-            )}
-          </button>
+          {!previewInfo && (
+            <button
+              onClick={handleSearch}
+              disabled={!url || isSearching}
+              className="flex items-center justify-center text-gray-200 cursor-pointer bg-primary hover:bg-opacity-90 font-semibold py-3 px-6 rounded-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+            >
+              {isSearching ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Search className="w-6 h-6" />
+              )}
+            </button>
+          )}
         </div>
 
         <AnimatePresence mode="wait">
+          {previewInfo && !showStatus && (
+            <motion.div
+              key="preview-card"
+              initial={{ opacity: 0, y: -20, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -20, height: 0 }}
+              className="mt-8 border border-border rounded-xl bg-bg-main/50 backdrop-blur-sm flex flex-col md:flex-row p-4 gap-6 items-center"
+            >
+              <div className="w-full md:w-56 h-32 bg-black/40 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
+                <img
+                  src={previewInfo.thumbnailUrl}
+                  alt="Thumbnail"
+                  className="w-full h-full object-contain object-top rounded-md"
+                />
+              </div>
+              <div className="flex-1 w-full flex flex-col justify-center">
+                <h3 className="text-gray-100 font-semibold text-lg line-clamp-2 mb-4" title={previewInfo.title}>
+                  {previewInfo.title}
+                </h3>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Dropdown options={['mp4', 'gif']} value={format} onChange={setFormat} />
+                  <button
+                    onClick={handleDownload}
+                    className="flex-1 flex items-center justify-center gap-2 bg-primary text-gray-200 font-semibold py-2 px-4 rounded-lg hover:bg-opacity-90 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <Download className="w-5 h-5" />
+                    Baixar
+                  </button>
+                  <button
+                    onClick={handleCancelSearch}
+                    title="Cancelar"
+                    className="flex-none px-4 flex items-center justify-center bg-white/5 hover:bg-white/10 text-text-faded hover:text-primary rounded-lg transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {showStatus && (
             <motion.div
               key="download-status"
@@ -112,22 +192,12 @@ function App() {
                 marginTop: 0,
               }}
               transition={{
-                height: {
-                  duration: 0.4,
-                },
-                opacity: {
-                  duration: 0.25,
-                },
-                y: {
-                  duration: 0.35,
-                },
-                scale: {
-                  duration: 0.4,
-                },
+                height: { duration: 0.4 },
+                opacity: { duration: 0.25 },
+                y: { duration: 0.35 },
+                scale: { duration: 0.4 },
               }}
-              style={{
-                overflow: 'hidden',
-              }}
+              style={{ overflow: 'hidden' }}
               className="mt-8"
             >
               <div className="p-5 border border-border rounded-xl bg-bg-main/50 backdrop-blur-sm flex items-center gap-5">
@@ -139,21 +209,16 @@ function App() {
                       ) : (
                         <Loader2 className="w-4 h-4 animate-spin text-primary" />
                       )}
-
                       {statusText}
                     </span>
-
                     <span className="text-sm font-bold text-primary">
                       {Math.floor(progress)}%
                     </span>
                   </div>
-
                   <div className="w-full bg-[#1a1a1e] rounded-full h-2 overflow-hidden">
                     <motion.div
                       className="h-2 rounded-full bg-primary"
-                      animate={{
-                        width: `${progress}%`,
-                      }}
+                      animate={{ width: `${progress}%` }}
                       transition={{
                         type: "spring",
                         stiffness: 40,
@@ -163,7 +228,6 @@ function App() {
                     />
                   </div>
                 </div>
-
                 <button
                   onClick={handleSave}
                   disabled={!isDownloaded}

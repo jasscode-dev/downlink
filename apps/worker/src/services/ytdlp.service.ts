@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { readdir } from "node:fs/promises";
+import { VideoInfo } from "@video-converter/shared/types/job.js";
 
 export interface DownloadResult {
   filePath: string;
@@ -67,5 +68,37 @@ export function downloadVideo(
     });
 
     ytDlp.on("error", reject);
+  });
+}
+
+export async function getVideoInfo(url: string): Promise<VideoInfo> {
+  return new Promise((resolve, reject) => {
+    const ytDlp = spawn("yt-dlp", ["--dump-json", url]);
+
+    let output = "";
+
+    ytDlp.stdout.on("data", (data) => {
+      output += data.toString();
+    });
+
+    ytDlp.on("close", (code) => {
+      if (code !== 0) {
+        return reject(new Error(`yt-dlp exited with code ${code}`));
+      }
+      try {
+        const info = JSON.parse(output);
+        resolve({
+          title: info.title || "Video",
+          thumbnailUrl: info.thumbnail || "",
+          duration: info.duration,
+        });
+      } catch (e) {
+        reject(new Error("Failed to parse yt-dlp output"));
+      }
+    });
+
+    ytDlp.on("error", (err) => {
+      reject(err);
+    });
   });
 }

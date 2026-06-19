@@ -10,7 +10,7 @@ export async function videoConversionProcessor(job: Job<CreateJobInput>) {
 
   try {
 
-    const hasConversion = !!outputFormat;
+    const hasConversion = !!outputFormat && outputFormat !== "mp4";
 
     await jobStateService.setStatus(jobId, "downloading", 0);
 

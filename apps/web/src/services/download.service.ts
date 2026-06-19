@@ -5,14 +5,17 @@ export const downloadService = {
 
     createJob: async (data: CreateJobInput): Promise<JobResponse> => {
         const response = await api.post('/api/jobs', data);
-        console.log(response.data)
         return response.data;
+    },
+
+    getVideoInfo: async (url: string) => {
+        const response = await api.get(`/api/info?url=${encodeURIComponent(url)}`);
+        return response.data.info;
     },
 
 
     getJobStatus: async (jobId: string): Promise<JobResponse> => {
         const response = await api.get(`/api/jobs/${jobId}`);
-        console.log("response", response.data)
         return response.data;
     }
 };

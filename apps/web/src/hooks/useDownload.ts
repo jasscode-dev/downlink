@@ -10,11 +10,9 @@ export function useDownload() {
     const [error, setError] = useState<string | null>(null);
     const [jobId, setJobId] = useState<string | null>(null);
 
-    // Usamos um ref para saber se o polling ainda deve estar rodando
-    // Isso evita que respostas antigas atualizem a tela se o usuário cancelar
     const isPolling = useRef(false);
 
-    // Função recursiva de polling (melhor que setInterval pois evita encavalar requisições)
+
     const pollJobStatus = async (id: string) => {
         if (!isPolling.current) return;
 
@@ -24,16 +22,16 @@ export function useDownload() {
 
             setProgress(job.progress || 0);
 
-            // Tratamento para sucesso
+
             if (job.status === 'completed') {
                 setStatusText('Download concluído!');
                 setIsDownloading(false);
                 setIsDownloaded(true);
                 isPolling.current = false;
-                return; // Sai do loop de polling
+                return;
             }
 
-            // Tratamento para erro
+
             if (job.status === 'failed') {
                 setStatusText('Falha no processamento.');
                 setError(job.errorMessage || 'Erro desconhecido ao processar o vídeo.');
@@ -70,11 +68,9 @@ export function useDownload() {
         setError(null);
 
         try {
-            // 1. Cria o Job na API
             const { job } = await downloadService.createJob({ url, outputFormat: format });
             setJobId(job.id);
 
-            // 2. Inicia o Polling de status
             isPolling.current = true;
             pollJobStatus(job.id);
 
@@ -96,7 +92,6 @@ export function useDownload() {
         setError(null);
     }, []);
 
-    // Segurança: Para o polling se o componente for desmontado da tela
     useEffect(() => {
         return () => {
             isPolling.current = false;

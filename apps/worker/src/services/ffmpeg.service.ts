@@ -27,13 +27,24 @@ export function convertVideo(
     const outputPath = path.join(CONVERTED_DIR, `${jobId}.${format}`);
     const isAudioOnly = AUDIO_ONLY_FORMATS.includes(format);
 
-    const args = [
-      "-i",
-      inputPath,
-      ...(isAudioOnly ? ["-vn"] : []),
-      "-y",
-      outputPath,
-    ];
+    let args: string[] = [];
+
+    if (format === "gif") {
+
+      args = [
+        "-i", inputPath,
+        "-vf", "fps=10,scale='min(640,iw)':-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
+        "-y",
+        outputPath,
+      ];
+    } else {
+      args = [
+        "-i", inputPath,
+        ...(isAudioOnly ? ["-vn"] : []),
+        "-y",
+        outputPath,
+      ];
+    }
 
     const ffmpegProcess = spawn(ffmpegPath as unknown as string, args);
 

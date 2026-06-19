@@ -5,11 +5,17 @@ export type JobStatus =
     | "completed"
     | "failed";
 
-export type OutputFormat = "gif";
+export type OutputFormat = "gif" | "mp4";
+
+export interface VideoInfo {
+    title: string;
+    thumbnailUrl: string;
+    duration?: number;
+}
 
 export interface CreateJobInput {
     url: string;
-    outputFormat?: OutputFormat;
+    outputFormat: OutputFormat;
 }
 
 export interface JobProgress {
@@ -21,7 +27,7 @@ export interface JobProgress {
 export interface JobRecord {
     id: string;
     url: string;
-    outputFormat?: OutputFormat;
+    outputFormat: OutputFormat;
     status: JobStatus;
     progress: number;
     sourceTitle?: string;
