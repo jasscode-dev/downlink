@@ -8,7 +8,7 @@ export class VideoController {
         const url = urlSchema.parse(req.query.url);
 
         const info = await getVideoInfo(url);
-        return res.json({ error: null, data: { info } });
+        return res.json({ error: null, data: info });
     }
 
     async create(req: Request, res: Response) {

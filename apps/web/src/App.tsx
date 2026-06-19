@@ -1,4 +1,4 @@
-import { useState } from 'react'
+
 import { Dropdown } from './components/dropdown'
 import {
   Copy,
@@ -11,73 +11,23 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDownload } from './hooks/useDownload'
-import { downloadService } from './services/download.service'
-import type { OutputFormat, VideoInfo } from '@video-converter/shared/types/video.js'
 
 function App() {
-  const [url, setUrl] = useState('')
-  const [format, setFormat] = useState<OutputFormat>('mp4')
-  const [previewInfo, setPreviewInfo] = useState<VideoInfo | null>(null)
-  const [isSearching, setIsSearching] = useState(false)
-
   const {
-    videoId,
+    url, setUrl,
+    format, setFormat,
+    previewInfo,
+    isSearching,
     isDownloading,
     isDownloaded,
     progress,
     statusText,
-    startDownload,
-    resetDownload
+    handlePaste,
+    handleSearch,
+    handleCancelSearch,
+    handleDownload,
+    handleSave,
   } = useDownload()
-
-  const handlePaste = async () => {
-    try {
-      const text = await navigator.clipboard.readText()
-      setUrl(text)
-    } catch (err) {
-      console.error('Falha ao colar:', err)
-    }
-  }
-
-  const handleSearch = async () => {
-    if (!url) return
-    setIsSearching(true)
-    try {
-      const info = await downloadService.getVideoInfo(url)
-      setPreviewInfo(info)
-    } catch (error) {
-      console.error('Erro ao buscar:', error)
-    } finally {
-      setIsSearching(false)
-    }
-  }
-
-  const handleCancelSearch = () => {
-    setPreviewInfo(null)
-    setUrl('')
-  }
-
-  const handleDownload = () => {
-    startDownload(url, format)
-  }
-
-  const handleSave = () => {
-    if (videoId) {
-      const a = document.createElement('a')
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-      a.href = `${baseUrl}/api/videos/${videoId}/download`
-      a.download = ''
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-    }
-
-    setTimeout(() => {
-      setPreviewInfo(null)
-      resetDownload()
-      setUrl('')
-    }, 100)
-  }
 
   const showStatus = isDownloading || isDownloaded
 
@@ -149,6 +99,11 @@ function App() {
               <div className="flex-1 w-full flex flex-col justify-center">
                 <h3 className="text-gray-100 font-semibold text-lg line-clamp-2 mb-4" title={previewInfo.title}>
                   {previewInfo.title}
+                  {previewInfo.duration && (
+                    <span className="text-text-faded text-sm font-normal ml-2">
+                      {Math.floor(previewInfo.duration / 60)}:{String(previewInfo.duration % 60).padStart(2, '0')}
+                    </span>
+                  )}
                 </h3>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Dropdown options={['mp4', 'gif']} value={format} onChange={setFormat} />
