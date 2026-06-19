@@ -3,9 +3,11 @@ import express from "express";
 import cors from "cors";
 import routes from "./routes/index.js";
 import { globalErrorHandler } from "./middlewares/error.middlewares.js";
-
+import { limiter } from "./middlewares/rate-limit.middleware.js";
 
 const app = express();
+
+app.use(limiter);
 
 app.use(cors({
     origin: true,
