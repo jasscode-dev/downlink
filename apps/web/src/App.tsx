@@ -8,13 +8,18 @@ import {
   Save,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useDownload } from './hooks/useDownload'
 
 function App() {
   const [url, setUrl] = useState('')
-  const [isDownloading, setIsDownloading] = useState(false)
-  const [isDownloaded, setIsDownloaded] = useState(true)
-  const [progress, setProgress] = useState(0)
-  const [statusText, setStatusText] = useState('')
+  const {
+    isDownloading,
+    isDownloaded,
+    progress,
+    statusText,
+    startDownload,
+    resetDownload
+  } = useDownload()
 
   const handlePaste = async () => {
     try {
@@ -26,38 +31,12 @@ function App() {
   }
 
   const handleDownload = () => {
-    if (!url || isDownloading) return
 
-    setIsDownloading(true)
-    setIsDownloaded(false)
-    setProgress(0)
-    setStatusText('Preparing download...')
-
-    let currentProgress = 0
-
-    const interval = setInterval(() => {
-      currentProgress += Math.random() * 12
-
-      if (currentProgress >= 100) {
-        currentProgress = 100
-        clearInterval(interval)
-
-        setProgress(100)
-        setStatusText('Download concluído!')
-        setIsDownloading(false)
-        setIsDownloaded(true)
-      } else {
-        setProgress(currentProgress)
-        setStatusText('Downloading...')
-      }
-    }, 400)
+    startDownload(url, 'gif')
   }
 
   const handleSave = () => {
-
-    setIsDownloaded(false)
-    setProgress(0)
-    setStatusText('')
+    resetDownload()
     setUrl('')
   }
 
@@ -176,7 +155,10 @@ function App() {
                         width: `${progress}%`,
                       }}
                       transition={{
-                        duration: 0.25,
+                        type: "spring",
+                        stiffness: 40,
+                        damping: 15,
+                        mass: 0.8
                       }}
                     />
                   </div>

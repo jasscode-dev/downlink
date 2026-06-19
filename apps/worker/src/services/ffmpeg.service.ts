@@ -52,7 +52,7 @@ export function convertVideo(
 
         const percent = Math.min(
           100,
-          (elapsed / durationSeconds) * 100,
+          Math.round((elapsed / durationSeconds) * 100),
         );
 
         onProgress(percent);

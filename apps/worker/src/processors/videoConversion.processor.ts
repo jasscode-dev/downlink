@@ -10,17 +10,20 @@ export async function videoConversionProcessor(job: Job<CreateJobInput>) {
 
   try {
 
+    const hasConversion = !!outputFormat;
+
     await jobStateService.setStatus(jobId, "downloading", 0);
 
     const { filePath } = await downloadVideo(url, jobId, (percent) => {
-      jobStateService.setStatus(jobId, "downloading", percent);
+      const globalPercent = hasConversion ? Math.round(percent / 2) : percent;
+      jobStateService.setStatus(jobId, "downloading", globalPercent);
     });
 
     let outputPath = filePath;
 
-    if (outputFormat) {
+    if (hasConversion) {
 
-      await jobStateService.setStatus(jobId, "converting", 0);
+      await jobStateService.setStatus(jobId, "converting", 50);
 
       const duration = await getVideoDuration(filePath);
 
@@ -30,7 +33,7 @@ export async function videoConversionProcessor(job: Job<CreateJobInput>) {
         outputFormat,
         duration,
         (percent) => {
-          jobStateService.setStatus(jobId, "converting", percent);
+          jobStateService.setStatus(jobId, "converting", Math.round(50 + (percent / 2)));
         },
       );
     }

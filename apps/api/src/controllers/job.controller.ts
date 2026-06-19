@@ -30,7 +30,6 @@ export class JobController {
                 outputFilePath: undefined,
                 downloadUrl: job.status === "completed" ?
                     `api/jobs/${job.id}/download` : null,
-
             }
         });
     }
