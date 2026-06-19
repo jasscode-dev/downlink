@@ -1,11 +1,11 @@
 import { Queue } from "bullmq";
 import { redisConnection } from "../config/redis.js";
-import type { CreateJobInput } from "@video-converter/shared/types/job.js";
+import type { VideoInput } from "@video-converter/shared/types/video.js";
 
 
 export const VIDEO_QUEUE_NAME = "video-conversion";
 
-export const videoQueue = new Queue<CreateJobInput>(VIDEO_QUEUE_NAME, {
+export const videoQueue = new Queue<VideoInput>(VIDEO_QUEUE_NAME, {
     connection: redisConnection as any,
     defaultJobOptions: {
         attempts: 2,

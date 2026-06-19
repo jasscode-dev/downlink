@@ -1,21 +1,21 @@
 import { api } from './api';
-import type { CreateJobInput, JobResponse } from '../../../../packages/shared/types/job';
+import type { VideoInput, VideoResponse } from '../../../../packages/shared/types/video';
 
 export const downloadService = {
 
-    createJob: async (data: CreateJobInput): Promise<JobResponse> => {
-        const response = await api.post('/api/jobs', data);
+    processVideo: async (data: VideoInput): Promise<VideoResponse> => {
+        const response = await api.post('/api/videos', data);
         return response.data;
     },
 
     getVideoInfo: async (url: string) => {
-        const response = await api.get(`/api/info?url=${encodeURIComponent(url)}`);
+        const response = await api.get(`/api/videos/info?url=${encodeURIComponent(url)}`);
         return response.data.info;
     },
 
 
-    getJobStatus: async (jobId: string): Promise<JobResponse> => {
-        const response = await api.get(`/api/jobs/${jobId}`);
+    getVideoStatus: async (videoId: string): Promise<VideoResponse> => {
+        const response = await api.get(`/api/videos/${videoId}`);
         return response.data;
     }
 };

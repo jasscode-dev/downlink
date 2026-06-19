@@ -12,7 +12,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDownload } from './hooks/useDownload'
 import { downloadService } from './services/download.service'
-import type { OutputFormat, VideoInfo } from '@video-converter/shared/types/job.js'
+import type { OutputFormat, VideoInfo } from '@video-converter/shared/types/video.js'
 
 function App() {
   const [url, setUrl] = useState('')
@@ -21,7 +21,7 @@ function App() {
   const [isSearching, setIsSearching] = useState(false)
 
   const {
-    jobId,
+    videoId,
     isDownloading,
     isDownloaded,
     progress,
@@ -62,9 +62,10 @@ function App() {
   }
 
   const handleSave = () => {
-    if (jobId) {
+    if (videoId) {
       const a = document.createElement('a')
-      a.href = `http://localhost:8080/api/jobs/${jobId}/download`
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+      a.href = `${baseUrl}/api/videos/${videoId}/download`
       a.download = ''
       document.body.appendChild(a)
       a.click()

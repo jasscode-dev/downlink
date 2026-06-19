@@ -1,16 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { redisConnection } from "../config/redis.js";
-import { CreateJobInput, JobRecord } from "@video-converter/shared/types/job.js";
+import { VideoInput, VideoRecord } from "@video-converter/shared/types/video.js";
 import { videoQueue } from "../queue/video.queue.js";
 
-const jobKey = (id: string) => `job:${id}`;
+const videoKey = (id: string) => `video:${id}`;
 
-export class JobService {
-    async createJob(input: CreateJobInput): Promise<JobRecord> {
+export class VideoService {
+    async processVideo(input: VideoInput): Promise<VideoRecord> {
         const id = randomUUID();
         const now = new Date().toISOString();
 
-        const record: JobRecord = {
+        const record: VideoRecord = {
             id,
             url: input.url,
             outputFormat: input.outputFormat,
@@ -20,18 +20,18 @@ export class JobService {
             updatedAt: now,
         };
 
-        await redisConnection.set(jobKey(id), JSON.stringify(record));
+        await redisConnection.set(videoKey(id), JSON.stringify(record));
 
         await videoQueue.add("convert", input, { jobId: id });
 
         return record;
     }
 
-    async getJob(id: string): Promise<JobRecord | null> {
-        const raw = await redisConnection.get(jobKey(id));
+    async getVideo(id: string): Promise<VideoRecord | null> {
+        const raw = await redisConnection.get(videoKey(id));
         if (!raw) return null;
-        return JSON.parse(raw) as JobRecord;
+        return JSON.parse(raw) as VideoRecord;
     }
 }
 
-export const jobService = new JobService();
+export const videoService = new VideoService();

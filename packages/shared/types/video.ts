@@ -1,4 +1,4 @@
-export type JobStatus =
+export type VideoStatus =
     | "queued"
     | "downloading"
     | "converting"
@@ -13,22 +13,22 @@ export interface VideoInfo {
     duration?: number;
 }
 
-export interface CreateJobInput {
+export interface VideoInput {
     url: string;
     outputFormat: OutputFormat;
 }
 
-export interface JobProgress {
-    stage: JobStatus;
+export interface VideoProgress {
+    stage: VideoStatus;
     percent: number;
     message?: string;
 }
 
-export interface JobRecord {
+export interface VideoRecord {
     id: string;
     url: string;
     outputFormat: OutputFormat;
-    status: JobStatus;
+    status: VideoStatus;
     progress: number;
     sourceTitle?: string;
     outputFilePath?: string;
@@ -37,6 +37,6 @@ export interface JobRecord {
     updatedAt: string;
 }
 
-export interface JobResponse {
-    job: JobRecord;
+export interface VideoResponse {
+    video: VideoRecord;
 }

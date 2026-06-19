@@ -1,2 +1,2 @@
-export * from "./shared/types/job.js";
-export * from "./shared/schemas/createJob.schema.js";
+export * from "./shared/types/video.js";
+export * from "./shared/schemas/video.schema.js";

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-import type { OutputFormat } from '@video-converter/shared/types/job.js';
+import type { OutputFormat } from '@video-converter/shared/types/video.js';
 
 type DropdownProps = {
     options: OutputFormat[];

@@ -1,4 +1,4 @@
-import { OutputFormat } from "@video-converter/shared/types/job.js";
+import { OutputFormat } from "@video-converter/shared/types/video.js";
 import { spawn } from "node:child_process";
 import path from "node:path";
 
@@ -14,7 +14,7 @@ const AUDIO_ONLY_FORMATS = ["mp3", "wav"];
 
 export function convertVideo(
   inputPath: string,
-  jobId: string,
+  videoId: string,
   format: OutputFormat,
   durationSeconds: number,
   onProgress: (percent: number) => void,
@@ -24,7 +24,7 @@ export function convertVideo(
       return reject(new Error("ffmpeg-static não encontrou o binário"));
     }
 
-    const outputPath = path.join(CONVERTED_DIR, `${jobId}.${format}`);
+    const outputPath = path.join(CONVERTED_DIR, `${videoId}.${format}`);
     const isAudioOnly = AUDIO_ONLY_FORMATS.includes(format);
 
     let args: string[] = [];

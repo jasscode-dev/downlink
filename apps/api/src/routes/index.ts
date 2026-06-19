@@ -1,9 +1,7 @@
 import { Router } from "express";
-import jobRoutes from "./job.routes.js";
-import infoRoutes from "./info.routes.js";
+import videoRoutes from "./video.routes.js";
 
 const router = Router();
-router.use("/jobs", jobRoutes);
-router.use("/info", infoRoutes);
+router.use("/videos", videoRoutes);
 
 export default router;

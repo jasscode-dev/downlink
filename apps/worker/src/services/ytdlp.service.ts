@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { readdir } from "node:fs/promises";
-import { VideoInfo } from "@video-converter/shared/types/job.js";
+import { VideoInfo } from "@video-converter/shared/types/video.js";
 
 export interface DownloadResult {
   filePath: string;
@@ -12,11 +12,11 @@ const DOWNLOADS_DIR = path.resolve(process.cwd(), "../../storage/downloads");
 
 export function downloadVideo(
   url: string,
-  jobId: string,
+  videoId: string,
   onProgress: (percent: number) => void,
 ): Promise<DownloadResult> {
   return new Promise((resolve, reject) => {
-    const outputTemplate = path.join(DOWNLOADS_DIR, `${jobId}.%(ext)s`);
+    const outputTemplate = path.join(DOWNLOADS_DIR, `${videoId}.%(ext)s`);
 
 
     const ytDlp = spawn("yt-dlp", [
@@ -43,7 +43,7 @@ export function downloadVideo(
 
 
     ytDlp.stderr.on("data", (chunk: Buffer) => {
-      console.error(`[yt-dlp][${jobId}] ${chunk.toString()}`);
+      console.error(`[yt-dlp][${videoId}] ${chunk.toString()}`);
     });
 
     ytDlp.on("close", async (code) => {
@@ -54,7 +54,7 @@ export function downloadVideo(
       try {
 
         const files = await readdir(DOWNLOADS_DIR);
-        const downloadedFile = files.find(f => f.startsWith(jobId));
+        const downloadedFile = files.find(f => f.startsWith(videoId));
 
         if (!downloadedFile) {
           return reject(new Error("Arquivo baixado não foi encontrado"));

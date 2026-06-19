@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { downloadService } from '../services/download.service';
-import type { OutputFormat } from '../../../../packages/shared/types/job';
+import type { OutputFormat } from '../../../../packages/shared/types/video';
 
 export function useDownload() {
     const [isDownloading, setIsDownloading] = useState(false);
@@ -8,22 +8,22 @@ export function useDownload() {
     const [progress, setProgress] = useState(0);
     const [statusText, setStatusText] = useState('');
     const [error, setError] = useState<string | null>(null);
-    const [jobId, setJobId] = useState<string | null>(null);
+    const [videoId, setVideoId] = useState<string | null>(null);
 
     const isPolling = useRef(false);
 
 
-    const pollJobStatus = async (id: string) => {
+    const pollVideoStatus = async (id: string) => {
         if (!isPolling.current) return;
 
         try {
-            const { job } = await downloadService.getJobStatus(id);
+            const { video } = await downloadService.getVideoStatus(id);
 
 
-            setProgress(job.progress || 0);
+            setProgress(video.progress || 0);
 
 
-            if (job.status === 'completed') {
+            if (video.status === 'completed') {
                 setStatusText('Download concluído!');
                 setIsDownloading(false);
                 setIsDownloaded(true);
@@ -32,28 +32,28 @@ export function useDownload() {
             }
 
 
-            if (job.status === 'failed') {
+            if (video.status === 'failed') {
                 setStatusText('Falha no processamento.');
-                setError(job.errorMessage || 'Erro desconhecido ao processar o vídeo.');
+                setError(video.errorMessage || 'Erro desconhecido ao processar o vídeo.');
                 setIsDownloading(false);
                 isPolling.current = false;
                 return;
             }
 
 
-            if (job.status === 'downloading') setStatusText('Downloading...');
-            else if (job.status === 'converting') setStatusText('Converting...');
-            else if (job.status !== 'queued') setStatusText('Processing...');
+            if (video.status === 'downloading') setStatusText('Downloading...');
+            else if (video.status === 'converting') setStatusText('Converting...');
+            else if (video.status !== 'queued') setStatusText('Processing...');
 
 
             if (isPolling.current) {
-                setTimeout(() => pollJobStatus(id), 200);
+                setTimeout(() => pollVideoStatus(id), 200);
             }
         } catch (err) {
             console.error('Erro ao consultar status:', err);
 
             if (isPolling.current) {
-                setTimeout(() => pollJobStatus(id), 2000);
+                setTimeout(() => pollVideoStatus(id), 2000);
             }
         }
     };
@@ -68,11 +68,11 @@ export function useDownload() {
         setError(null);
 
         try {
-            const { job } = await downloadService.createJob({ url, outputFormat: format });
-            setJobId(job.id);
+            const { video } = await downloadService.processVideo({ url, outputFormat: format });
+            setVideoId(video.id);
 
             isPolling.current = true;
-            pollJobStatus(job.id);
+            pollVideoStatus(video.id);
 
         } catch (err: any) {
             console.error('Falha ao enviar link:', err);
@@ -88,7 +88,7 @@ export function useDownload() {
         setIsDownloading(false);
         setProgress(0);
         setStatusText('');
-        setJobId(null);
+        setVideoId(null);
         setError(null);
     }, []);
 
@@ -104,7 +104,7 @@ export function useDownload() {
         progress,
         statusText,
         error,
-        jobId,
+        videoId,
         startDownload,
         resetDownload
     };
