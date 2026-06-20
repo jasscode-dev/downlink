@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { downloadService } from '../services/download.service';
 import type { OutputFormat, VideoInfo } from '../../../../packages/shared/types/video';
 import { urlSchema } from '../../../../packages/shared/schemas/video.schema';
+import toast from 'react-hot-toast';
 
 export function useDownload() {
     const [url, setUrl] = useState('');
@@ -51,6 +52,7 @@ export function useDownload() {
             setStatusText('Download concluído!');
             setIsDownloading(false);
             setIsDownloaded(true);
+            toast.success('Pronto para salvar!');
             socket.disconnect();
             socketRef.current = null;
         });
@@ -58,7 +60,9 @@ export function useDownload() {
         socket.on('video-failed', (data: { error?: string }) => {
 
             setStatusText('Falha no processamento.');
-            setError(data.error || 'Erro desconhecido ao processar o vídeo.');
+            const errMsg = data.error || 'Erro desconhecido ao processar o vídeo.';
+            setError(errMsg);
+            toast.error(errMsg);
             setIsDownloading(false);
             socket.disconnect();
             socketRef.current = null;
@@ -83,7 +87,9 @@ export function useDownload() {
 
         } catch (err: any) {
             console.error('Falha ao enviar link:', err);
-            setError(err.response?.data?.message || 'Erro de conexão com o servidor.');
+            const errMsg = err.response?.data?.message || 'Erro de conexão com o servidor.';
+            setError(errMsg);
+            toast.error(errMsg);
             setIsDownloading(false);
             setStatusText('Falha ao iniciar.');
         }
@@ -106,8 +112,10 @@ export function useDownload() {
         try {
             const text = await navigator.clipboard.readText()
             setUrl(text)
+            toast.success('Link colado!')
         } catch (err) {
             console.error('Falha ao colar:', err)
+            toast.error('Falha ao acessar a área de transferência')
         }
     }
 
@@ -117,12 +125,14 @@ export function useDownload() {
         try {
             const dataParsed = urlSchema.safeParse(url)
             if (!dataParsed.success) {
-                console.log(dataParsed.error?.issues[0].message)
+                const msg = dataParsed.error?.issues[0].message || 'URL Inválida';
+                toast.error(msg)
                 return
             }
             const info = await downloadService.getVideoInfo(dataParsed.data)
             setPreviewInfo(info)
         } catch (error) {
+            toast.error('Erro ao buscar informações do vídeo')
         } finally {
             setIsSearching(false)
         }

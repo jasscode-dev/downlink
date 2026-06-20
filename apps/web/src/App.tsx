@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDownload } from './hooks/useDownload'
+import { Toaster } from 'react-hot-toast'
 
 function App() {
   const {
@@ -33,6 +34,31 @@ function App() {
 
   return (
     <div className="bg-bg-main min-h-screen flex flex-col items-center justify-center p-4">
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          className: 'shadow-lg',
+          style: {
+            background: 'var(--color-bg-main, #020202)',
+            color: '#fff',
+            border: '1px solid var(--color-border, #212121)',
+            borderRadius: '12px',
+            padding: '12px 16px'
+          },
+          success: {
+            iconTheme: {
+              primary: 'var(--color-primary, #d84f75)',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: 'var(--color-primary, #d84f75)',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <div className="border border-border rounded-xl shadow-lg p-8 max-w-3xl w-full">
         <h1 className="text-3xl font-bold text-gray-100">
           MO<span className="text-primary">A</span>
