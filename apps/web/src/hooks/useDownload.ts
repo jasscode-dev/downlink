@@ -86,12 +86,8 @@ export function useDownload() {
             connectSocket(video.id);
 
         } catch (err: any) {
-            console.error('Falha ao enviar link:', err);
-            const errMsg = err.response?.data?.message || 'Erro de conexão com o servidor.';
-            setError(errMsg);
-            toast.error(errMsg);
             setIsDownloading(false);
-            setStatusText('Falha ao iniciar.');
+
         }
     };
 
@@ -114,7 +110,6 @@ export function useDownload() {
             setUrl(text)
             toast.success('Link colado!')
         } catch (err) {
-            console.error('Falha ao colar:', err)
             toast.error('Falha ao acessar a área de transferência')
         }
     }
@@ -131,8 +126,7 @@ export function useDownload() {
             }
             const info = await downloadService.getVideoInfo(dataParsed.data)
             setPreviewInfo(info)
-        } catch (error) {
-            toast.error('Erro ao buscar informações do vídeo')
+        } catch (error: any) {
         } finally {
             setIsSearching(false)
         }

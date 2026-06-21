@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { videoInputSchema, urlSchema } from "@video-converter/shared/schemas/video.schema.js";
+import { AppError } from "../errors/appError.js";
 import { videoService } from "../services/video.service.js";
 import { getVideoInfo } from "@video-converter/worker/src/services/ytdlp.service.js";
 
@@ -7,7 +8,12 @@ export class VideoController {
     async getInfo(req: Request, res: Response) {
         const url = urlSchema.parse(req.query.url);
 
-        const info = await getVideoInfo(url);
+        let info;
+        try {
+            info = await getVideoInfo(url);
+        } catch (error) {
+            throw new AppError("Could not access this video. It might be unavailable, private, or the link is incorrect.", 400);
+        }
         return res.json({ error: null, data: info });
     }
 
